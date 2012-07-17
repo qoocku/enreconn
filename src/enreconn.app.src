@@ -1,0 +1,13 @@
+%%-*- mode: erlang -*-
+{application, enreconn,
+ [
+  {description, "enreconn"},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, {enreconn_app, []}},
+  {env, []}
+ ]}.
