@@ -92,7 +92,7 @@ unregister_node (Node, State) ->
 
 reconnect (pang, Node) ->
   try
-    reconnect(net_adm:ping(Node), Node)
+    reconnect(ping(Node), Node)
   catch
     E:R ->
      error_logger:error_report([{enreconn, node_reconnected},
@@ -105,3 +105,8 @@ reconnect (pong, Node) ->
   error_logger:info_report([{enreconn, node_reconnected},
                             {node, Node}]),
   ok.
+
+%% @doc Special ping version (do not catch exceptions).
+
+ping (Node) ->
+  gen_server:call({net_kernel, Node}, {is_auth, node()}, infinity).
