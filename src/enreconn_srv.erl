@@ -91,7 +91,15 @@ unregister_node (Node, State) ->
 -spec reconnect (PreviousAnswer::ping|pong, node()) -> ok.
 
 reconnect (pang, Node) ->
-  reconnect(net_adm:ping(Node), Node);
+  try
+    reconnect(net_adm:ping(Node), Node)
+  catch
+    E:R ->
+     error_logger:error_report([{enreconn, node_reconnected},
+                                {what, E},
+                                {why, R},
+                                {node, Node}])
+  end;
 reconnect (pong, Node) ->
   %% good, the node has answered
   error_logger:info_report([{enreconn, node_reconnected},
