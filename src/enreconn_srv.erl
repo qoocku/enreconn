@@ -9,13 +9,14 @@
 -behavior (gen_server).
 
 -export ([init/1,
+          ping/1,
           handle_cast/2,
           handle_info/2,
           terminate/2,
           code_change/3]).
 
--export ([reconnect/2]).
-
+-export ([reconnect/3]).
+                                 
 -record (state, {tid :: ets:tid()}).
 -type state () :: #state{}.
 
@@ -77,7 +78,7 @@ reconnect_if_needed (false, Node, State) ->
   true = ets:delete(State#state.tid, Node),
   State;
 reconnect_if_needed (true, Node, State) ->
-  erlang:spawn(?MODULE, reconnect, [pang, Node]),
+  erlang:spawn(?MODULE, reconnect, [pang, Node, now()]),
   State.
 
 %% @doc Unregisters node and does not try to reconnect.
@@ -88,19 +89,31 @@ unregister_node (Node, State) ->
 
 %% @doc Keep reconnecting a node via pinging till it answers with `pong'.
 
--spec reconnect (PreviousAnswer::ping|pong, node()) -> ok.
+-spec reconnect (PreviousAnswer::ping|pong, node(), erlang:now()) -> ok.
 
-reconnect (pang, Node) ->
+reconnect (pang, Node, Started) ->
   try
-    reconnect(ping(Node), Node)
+    error_logger:info_report([{enreconn, reconnect},
+                              {what, reconnection_try},
+                              {lasts, timer:now_diff(now(), Started)/1000},
+                              {node, Node}]),
+    timer:sleep(cfg_var(reconnection_idle_time, 10000)),
+    case (timer:now_diff(now(), Started)/1000) < cfg_var(reconnection_timeout, 60000) of
+      true ->
+        ?MODULE:reconnect(net_adm:ping(Node), Node, Started);
+      false ->
+        error_logger:info_report([{enreconn, reconnect},
+                                  {what, reconnection_timeout},
+                                  {node, Node}])
+    end
   catch
     E:R ->
-     error_logger:error_report([{enreconn, node_reconnected},
+     error_logger:error_report([{enreconn, reconnect},
                                 {what, E},
                                 {why, R},
                                 {node, Node}])
   end;
-reconnect (pong, Node) ->
+reconnect (pong, Node, _Started) ->
   %% good, the node has answered
   error_logger:info_report([{enreconn, node_reconnected},
                             {node, Node}]),
@@ -110,3 +123,14 @@ reconnect (pong, Node) ->
 
 ping (Node) ->
   gen_server:call({net_kernel, Node}, {is_auth, node()}, infinity).
+
+%% @doc Returns the application configuration variable value.
+%% Return `Def' default value if no such variable is found in the apps config.
+
+-spec cfg_var (atom(), any()) -> any().
+
+cfg_var (Name, Def) ->
+  case application:get_env(enreconn, Name) of 
+    undefined -> Def; 
+    {ok, Val} -> Val 
+  end.
