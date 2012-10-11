@@ -98,7 +98,7 @@ reconnect (pang, Node, Started) ->
                               {lasts, timer:now_diff(now(), Started)/1000},
                               {node, Node}]),
     timer:sleep(cfg_var(reconnection_idle_time, 10000)),
-    case (timer:now_diff(now(), Started)/1000) < cfg_var(reconnection_timeout, 60000) of
+    case (timer:now_diff(now(), Started)/1000) < cfg_var(reconnection_timeout, 600000) of
       true ->
         ?MODULE:reconnect(net_adm:ping(Node), Node, Started);
       false ->

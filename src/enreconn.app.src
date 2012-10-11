@@ -8,6 +8,7 @@
                   kernel,
                   stdlib
                  ]},
-  {mod, {enreconn_app, []}},
-  {env, [{reconnection_timeout, 60000}]}
+  {mod, {enreconn_app, []}}, 
+  {env, [{reconnection_timeout, 3600000},
+         {reconnection_idle_time, 100000}]}
  ]}.
