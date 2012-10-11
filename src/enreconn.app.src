@@ -9,5 +9,5 @@
                   stdlib
                  ]},
   {mod, {enreconn_app, []}},
-  {env, []}
+  {env, [{reconnection_timeout, 60000}]}
  ]}.
