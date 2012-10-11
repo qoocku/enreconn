@@ -98,13 +98,19 @@ reconnect (pang, Node, Started) ->
                               {lasts, timer:now_diff(now(), Started)/1000},
                               {node, Node}]),
     timer:sleep(cfg_var(reconnection_idle_time, 10000)),
-    case (timer:now_diff(now(), Started)/1000) < cfg_var(reconnection_timeout, 600000) of
-      true ->
+    RT =  cfg_var(reconnection_timeout, 3600000),
+    case RT of
+      infinity ->
         ?MODULE:reconnect(net_adm:ping(Node), Node, Started);
-      false ->
-        error_logger:info_report([{enreconn, reconnect},
-                                  {what, reconnection_timeout},
-                                  {node, Node}])
+      RT ->
+        case (timer:now_diff(now(), Started)/1000 < RT) of
+          true ->
+            ?MODULE:reconnect(net_adm:ping(Node), Node, Started);
+          false ->
+            error_logger:info_report([{enreconn, reconnect},
+                                      {what, reconnection_timeout},
+                                      {node, Node}])
+        end
     end
   catch
     E:R ->

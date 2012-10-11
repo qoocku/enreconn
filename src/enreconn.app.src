@@ -9,6 +9,6 @@
                   stdlib
                  ]},
   {mod, {enreconn_app, []}}, 
-  {env, [{reconnection_timeout, 3600000},
+  {env, [{reconnection_timeout, 3600000}, %% [ms] or may be also 'infinity' atom
          {reconnection_idle_time, 100000}]}
  ]}.
