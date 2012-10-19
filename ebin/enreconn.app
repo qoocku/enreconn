@@ -4,5 +4,7 @@
               {registered,[]},
               {applications,[kernel,stdlib]},
               {mod,{enreconn_app,[]}},
-              {env,[]},
+              {env,[{reconnection_timeout,3600000},
+                    {reconnection_idle_time,100000},
+                    {exclude,[]}]},
               {modules,[enreconn,enreconn_app,enreconn_srv,enreconn_sup]}]}.

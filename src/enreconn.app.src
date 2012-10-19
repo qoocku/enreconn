@@ -10,5 +10,7 @@
                  ]},
   {mod, {enreconn_app, []}}, 
   {env, [{reconnection_timeout, 3600000}, %% [ms] or may be also 'infinity' atom
-         {reconnection_idle_time, 100000}]}
+         {reconnection_idle_time, 100000}, %% [ms]
+         {exclude, []} %% list of node names regexps designated for exclusion from reconnection
+        ]} 
  ]}.

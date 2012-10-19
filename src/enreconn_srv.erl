@@ -71,8 +71,17 @@ process_msg ({nodedown, Node, _InfoList}, State) ->
 -spec node_down (node(), state()) -> state().
 
 node_down (Node, State) ->
-  reconnect_if_needed(ets:lookup(State#state.tid, Node) =:= [], 
-                      Node, State).
+  NodeStr       = erlang:atom_to_list(Node),
+  {ok, Regexps} = application:get_env(exclude),
+  case lists:any(fun (Regexp) ->
+                     re:run(NodeStr, Regexp)
+                 end, Regexps) of
+    false ->
+      reconnect_if_needed(ets:lookup(State#state.tid, Node) =:= [], 
+                          Node, State);
+    true ->
+      State
+  end.
 
 reconnect_if_needed (false, Node, State) ->
   true = ets:delete(State#state.tid, Node),
