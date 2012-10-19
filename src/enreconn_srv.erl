@@ -82,23 +82,25 @@ node_down (Node, State) ->
                      end
                  end, Regexps) of
     false ->
-      reconnect_if_needed(ets:lookup(State#state.tid, Node) =:= [], 
-                          Node, State);
+      reconnect_if_needed(ets:lookup(State#state.tid, Node), Node, State);
     true ->
       State
   end.
 
-reconnect_if_needed (false, Node, State) ->
+reconnect_if_needed ([{Node, unregistered}], Node, State) ->
   true = ets:delete(State#state.tid, Node),
   State;
-reconnect_if_needed (true, Node, State) ->
+reconnect_if_needed ([{Node, reconnecting}], Node, State) ->
+  State;
+reconnect_if_needed ([], Node, State) ->
+  true = ets:insert(State#state.tid, {Node, reconnecting}),
   erlang:spawn(?MODULE, reconnect, [pang, Node, now()]),
   State.
 
 %% @doc Unregisters node and does not try to reconnect.
 
 unregister_node (Node, State) ->
-  true = ets:insert(State#state.tid, {Node}),
+  true = ets:insert(State#state.tid, {Node, unregistered}),
   State.
 
 %% @doc Keep reconnecting a node via pinging till it answers with `pong'.
@@ -123,7 +125,8 @@ reconnect (pang, Node, Started) ->
           false ->
             error_logger:info_report([{enreconn, reconnect},
                                       {what, reconnection_timeout},
-                                      {node, Node}])
+                                      {node, Node}]),
+            forget_node(Node)
         end
     end
   catch
@@ -131,13 +134,18 @@ reconnect (pang, Node, Started) ->
      error_logger:error_report([{enreconn, reconnect},
                                 {what, E},
                                 {why, R},
-                                {node, Node}])
+                                {node, Node}]),
+      forget_node(Node)
   end;
 reconnect (pong, Node, _Started) ->
   %% good, the node has answered
   error_logger:info_report([{enreconn, node_reconnected},
                             {node, Node}]),
+  forget_node(Node),
   ok.
+
+forget_node (Node) ->
+  gen_server:cast(?MODULE, {forget, Node}).
 
 %% @doc Special ping version (do not catch exceptions).
 
