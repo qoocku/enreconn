@@ -57,8 +57,12 @@ code_change (_OldVsn, State, _Extra) ->
 %% @doc Processes incoming messages.
 
 -spec process_msg ({nodeup | nodedown, node(), list()} |
+                   {forget, node()}                    |
                    {enreconn_node_stop, node()}, state()) -> state().
 
+process_msg ({forget, Node}, State) ->
+  ets:delete(State#state.tid, Node),
+  State;
 process_msg ({enreconn_node_stop, Node}, State) ->
   unregister_node(Node, State);
 process_msg ({nodeup, _Node, _InfoList}, State) ->
