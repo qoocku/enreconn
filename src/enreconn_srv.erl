@@ -74,7 +74,12 @@ node_down (Node, State) ->
   NodeStr       = erlang:atom_to_list(Node),
   {ok, Regexps} = application:get_env(exclude),
   case lists:any(fun (Regexp) ->
-                     re:run(NodeStr, Regexp)
+                     case re:run(NodeStr, Regexp) of
+                       {match, _} ->
+                         true;
+                       nomatch ->
+                         false
+                     end
                  end, Regexps) of
     false ->
       reconnect_if_needed(ets:lookup(State#state.tid, Node) =:= [], 
