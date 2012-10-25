@@ -15,10 +15,16 @@
           terminate/2,
           code_change/3]).
 
--export ([reconnect/3]).
+-export ([reconnect/3, 
+          default_callback/1]).
                                  
--record (state, {tid :: ets:tid()}).
+-type callback () :: {module(), atom()}.
+%% Reconnection callback.
+-record (state, {tid      :: ets:tid(),
+                 callback :: callback()}).
 -type state () :: #state{}.
+
+-export_type ([callback/0]).
 
 %% @doc The server process initialisation.
 %% First, it registers itself as nodes monitoring
@@ -26,9 +32,11 @@
 %% Then it opens ETS table to hold dis-connected node names.
 
 init (_) ->
-  ok  = net_kernel:monitor_nodes(true, [{node_type, all}]),
-  Tid = ets:new(?MODULE, []),
-  {ok, #state{tid = Tid}}.
+  ok           = net_kernel:monitor_nodes(true, [{node_type, all}]),
+  Tid          = ets:new(?MODULE, []),
+  {ok, {M, F}} = application:get_env(enreconn, callback),
+  {ok, #state{tid      = Tid, 
+              callback = {M, F}}}.
 
 %% @doc Handles nodes notifications about supernormal exits (no need to reconnect).
 %% The server casts this message if the application is about to be stopped.
@@ -166,3 +174,10 @@ cfg_var (Name, Def) ->
     undefined -> Def; 
     {ok, Val} -> Val 
   end.
+
+%% @doc Default callback applied when a node is reconnected.
+
+-spec default_callback (node()) -> ok.
+
+default_callback (Node) when is_atom(Node) ->
+  ok.
