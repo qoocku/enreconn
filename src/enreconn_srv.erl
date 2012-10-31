@@ -32,9 +32,13 @@
 %% Then it opens ETS table to hold dis-connected node names.
 
 init (_) ->
-  ok           = net_kernel:monitor_nodes(true, [{node_type, all}]),
-  Tid          = ets:new(?MODULE, []),
-  {ok, {M, F}} = application:get_env(enreconn, callback),
+  ok     = net_kernel:monitor_nodes(true, [{node_type, all}]),
+  Tid    = ets:new(?MODULE, []),
+  {M, F} = case application:get_env(enreconn, callback) of
+             {ok, X} -> X;
+             undefined ->
+               {?MODULE, default_callback}
+           end,
   {ok, #state{tid      = Tid, 
               callback = {M, F}}}.
 
