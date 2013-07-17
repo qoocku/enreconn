@@ -12,10 +12,6 @@
 %%% the License for the specific language governing rights and limitations
 %%% under the License.
 %%%
-%%% The Initial Developer of the Original Code is Ericsson Utvecklings AB.
-%%% Portions created by Ericsson are Copyright 1999, Ericsson Utvecklings
-%%% AB. All Rights Reserved.
-%%%
 %%% @author Damian T. Dobroczy\\'nski
 %%% @since 2012-07-17
 %%% @end
